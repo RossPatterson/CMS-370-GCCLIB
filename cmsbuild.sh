@@ -97,7 +97,10 @@ herccontrol "/GCCSRCH" -w "^Ready;"
 herccontrol "/GCCGEN" -w "^Ready;"
 
 herccontrol "/ipl cms" -w "^CMS"
-herccontrol "/" -w "^Ready;"
+# Don't run the SYSPROFB EXEC because the existing version of BREXX and
+# the new version of GCCLIB might be incompatible.
+# herccontrol "/" -w "^Ready;"
+herccontrol "/access (noprof" -w "^Ready;"
 
 # Make binary tape and vmarc
 herccontrol "/cp disc" -w "^VM/370 Online"
