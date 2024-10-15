@@ -1,0 +1,115 @@
+ TITLE 'CMSCRT0 - CMS library entry point for GCCRES TXTLIB'
+**************************************************************
+* A user C program linked with the GCCRES TXTLIB enters here.*
+* This routine looks for a compatible set of runtime code    *
+* loaded in storage. the SYSPROFB EXEC loaded the GCC        *
+* runtime either in a saved segment, or as a routine         *
+* dynammically loaded by NUCXTEXT or RESLIB.                 *
+*                                                            *
+* Either way, this routine obtains the address of the        *
+* runtime version and vector table by issuing the GCCLIB     *
+* ANCHOR command via an SVC 202. The address of returned in  *
+* register R15.                                              *
+*                                                            *
+* If the C program had been linked with the GCCLIB TXTLIB,   *
+* the GCCCRT0 program would have been called instead of this *
+* entry point.                                               *
+**************************************************************
+CMSCRT0  CSECT
+@@CRT0   DS     0H
+         ENTRY  @@CRT0
+         STM    R14,R12,12(R13)
+         LR     R12,R15
+         USING  CMSCRT0,R12
+* ------------------------------------------------------------
+* Ask the memory resident runtime for the vector table and
+* libary version information.
+* ------------------------------------------------------------
+         LA    R1,GETVTAB     Ask library for vector table
+         SVC   202
+         DC    AL4(1)
+         LTR   R15,R15        Check result
+         BM    NEXTERR        Skip if library not available
+         LR    R6,R15         Pointer to library version info
+*                                and vector table to routines
+* ------------------------------------------------------------
+* Check for compatibility between user program and runtime
+* ------------------------------------------------------------
+GOTRTLIB DS    0H
+         CLC   LIBNAME,0(R6)  Library name match?
+         BNE   BADNAME        Error if not
+* The next two tests can be uncommented if we ever decide to
+* check the routines linked into the user MODULE against the
+* version of the resident library in storage.
+*        CLI   8(R6),MAJORVR  Major version number match?
+*        BL    BADVERS        Error if library is backlevel
+*        CLI   9(R6),MINORVR  Major version number match?
+*        BL    BADVERS        Error if library is backlevel
+         LA    R6,16(,R6)     Skip to vector table start
+* We will use the section of our nine doubleword R13 savearea
+* just past our saved registers to build a plist to pass to
+* __cstub in CMSRTSTB C from CMSENTRY ASSEMBLE.
+*
+         EXTRN  CMSENTRY
+         L     R15,=A(CMSENTRY) Continue with initialization
+*
+         ST    R6,20*4(,R13)  Set RTL vector tbl ptr as parm 3
+         L     R14,12(,R13)   Reload most
+         LM    R0,R12,20(R13) ... entry registers
+         ST    1,18*4(,13)    Set entry PLIST ptr as parm 1
+         ST    0,19*4(,13)    Set entry EPLIST ptr as parm 2
+*                             Pass control to CMSENTRY
+         BR    R15            Control never returns here
+* --------------------------------------------------------------------
+* Error exits
+* --------------------------------------------------------------------
+*
+NEXTERR  DS    0H
+         DMSERR TEXT='........ runtime library not preloaded inside the*
+                VIRTUAL MACHINE',                                      *
+               SUB=(CHARA,LIBNAME),NUM=(R9),LET=E,CSECT=GCC,           *
+               DOT=NO,RENT=NO
+         B     ERREXIT        free stack and exit
+*
+BADNAME  DS    0H
+         LA    R9,52
+         DMSERR TEXT='Runtime library name ........ does not match expe*
+               CTED ........',                                         *
+               SUB=(CHARA,(R6),CHARA,LIBNAME),                         *
+               NUM=(R9),LET=E,CSECT=GCC,DOT=NO,RENT=NO
+         B     ERREXIT        free stack and exit
+         SPACE ,
+BADVERS  DS    0H
+         LA    R9,56
+         DMSERR TEXT='Incompatible ........ runtime library version',  *
+               SUB=(CHARA,LIBNAME),                                    *
+               NUM=(R9),LET=E,CSECT=GCC,DOT=NO,RENT=NO
+         B     ERREXIT        free stack and exit
+* --------------------------------------------------------------------
+ERREXIT  DS    0H
+         L     R14,12(,R13)   restore return address
+         LM    R0,R12,20(R13) restore our caller's registers
+         BR    R14            return to CMS
+         EJECT
+* --------------------------------------------------------------------
+*        READ ONLY DATA
+* --------------------------------------------------------------------
+MAJOR    DC    AL1(MAJORVR)   Minimum runtime major version
+MINOR    DC    AL1(MINORVR)   Minimum runtime minor version
+*                             Fetch resident library anchor
+GETVTAB  DS    0D             DIAG 064 requires that name be
+*                                  doubleword aligned
+LIBNAME  DC    CL8'GCCLIB'
+         DC    CL8'ANCHOR'
+         DC    8X'FF'
+* --------------------------------------------------------------------
+*        Constants
+* --------------------------------------------------------------------
+LOADSHR  EQU   X'00'
+FINDSYS  EQU   X'0C'
+         GCCLIBVR
+         REGEQU ,
+         CMSCRAB
+         GCCCRAB
+         NUCON
+         END

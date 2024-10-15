@@ -10,7 +10,7 @@
 
 /*
   TODO
-    tmpname - Static Name and counter to CRAB. Check already opened
+    tmpname - Check already opened
 */
 
 
@@ -289,8 +289,10 @@ static int write_cache(FILE *file) {
 /* returns the access mode or -1 on error                           */
 /********************************************************************/
 static int parse_access_mode(const char *accessmode) {
+
     char has_p = 0; /* i.e. a '+' */
     char has_b = 0;
+    char has_c = 0;
     int mode = 0;
 
     switch (accessmode[0]) {
@@ -317,11 +319,14 @@ static int parse_access_mode(const char *accessmode) {
             case 'b':
                 has_b = 1;
                 break;
+            case ',':
+                has_c = 1;
+                break;
             default:
                 return -1;
                 break;
         }
-        if (accessmode[2]) {
+        if (accessmode[2] && (has_c == 0)) {
             switch (accessmode[2]) {
                 case '+':
                     if (has_p) return -1;
@@ -331,11 +336,16 @@ static int parse_access_mode(const char *accessmode) {
                     if (has_b) return -1;
                     has_b = 1;
                     break;
+                case ',':
+                    has_c = 1;
+                    break;
                 default:
                     return -1;
                     break;
             }
-            if (accessmode[3]) return -1;
+            if (accessmode[3] && (has_c == 0)){
+                if( accessmode[3] != ',' )return -1;
+            }
         }
     }
 
@@ -357,6 +367,7 @@ static int do_open(const char *filespec, const char *access, FILE *theFile) {
     int c = 0;
     int p = 0;
     char fsword[6][10] = {"", "", "", "", "", ""};
+    char *ri;
     int accessMode;
     int d;
     int rc;
@@ -375,6 +386,21 @@ static int do_open(const char *filespec, const char *access, FILE *theFile) {
 
         /* Word Overspill */
         for (; filespec[c] && filespec[c] != ' '; c++);
+    }
+
+    /* check for lrecl in the access mode */
+    if(ri=strstr(access,"lrecl=")){
+        ri = &ri[6];
+        for (p = 0; ri[p] && p < 9 && ri[p] != ','; c++, p++)
+            fsword[4][p] = ri[p];
+        fsword[4][p] = 0;
+    }
+    /* check for recfm in the access mode */
+    if(ri=strstr(access,"recfm=")){
+        if ( ri[6] == 'F' || ri[6] == 'V'){
+           fsword[3][0] = ri[6];
+           fsword[3][1] = 0;
+        }
     }
 
     /* Get the access mode argument. */
@@ -1719,8 +1745,7 @@ tmpnam(char *name)
 /**************************************************************************************************/
 
 {
-    static int counter = 0; /* CRAB */
-    static char staticName[21]; /* CRAB */
+    int *counter = GETGCCCRAB()->tempcounter;
     CMSFILEINFO *file_state;
     struct tm *t;
     time_t theTime;
@@ -1729,18 +1754,18 @@ tmpnam(char *name)
     char fileid[19];
     char *fm = "A1";
 
-    if (!name) name = staticName;
+    if (!name) name = GETGCCCRAB()->tempname;
 
     time(&theTime);
     t = localtime(&theTime);
     strftime(fn, 9, "T%y%j%H", t);
     strftime(ft, 5, "%M%S", t);
 
-    for (counter++; counter < 10000; counter++) {
-        sprintf(fileid, "%s%s%04d%s", fn, ft, counter, fm);
+    for ((*counter)++; *counter < 10000; (*counter)++) {
+        sprintf(fileid, "%s%s%04d%s", fn, ft, *counter, fm);
         if (CMSfileState(fileid, &file_state)) {
             /* Good - File does not exist (or some other error!) */
-            sprintf(name, "%s %s%04d %s", fn, ft, counter, fm);
+            sprintf(name, "%s %s%04d %s", fn, ft, *counter, fm);
             return name;
         }
     }

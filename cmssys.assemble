@@ -1,15 +1,16 @@
-*********************************************************************** 00010000
-* CMSSYS contains C interfaces to CMS system services:                * 00020000
-*    @@DEBUG  A dummy routine callable from C (set breakpoint here).  * 00030000
-*    @@ATTN   Place a line on the CMS console stack.                  * 00040000
-*    @@SVC202 Invoke a CMS system service or command.                 * 00050000
-*    @@DMSFRE Allocate free memory.                                   * 00060000
-*    @@DMSFRT Release allocated memory.                               * 00070000
-*    @@FSCLOS Close an open file and save it to disk.                 * 00080000
-*    @@FSERAS Delete a CMS file.                                      * 00090000
-*    @@FSOPEN Open a CMS file for reading or writing.                 * 00100000
-*    @@FSPOIN Set the next item in a file to be read or written.      * 00110000
-*    @@FSREAD Read a record from an open file.                        * 00120000
+***********************************************************************
+* CMSSYS contains C interfaces to CMS system services:                *
+*    @@DEBUG  A dummy routine callable from C (set breakpoint here).  *
+*    @@ATTN   Place a line on the CMS console stack.                  *
+*    @@SVC202 Invoke a CMS system service or command.                 *
+*    @@CMSCMD Invoke a CMS system service or command.                 *
+*    @@DMSFRE Allocate free memory.                                   *
+*    @@DMSFRT Release allocated memory.                               *
+*    @@FSCLOS Close an open file and save it to disk.                 *
+*    @@FSERAS Delete a CMS file.                                      *
+*    @@FSOPEN Open a CMS file for reading or writing.                 *
+*    @@FSPOIN Set the next item in a file to be read or written.      *
+*    @@FSREAD Read a record from an open file.                        *
 *    @@FSSTAT Determine whether a file exists.                        *
 *    @@FSWRIT Write a record to an open file.                         *
 *    @@GETCLK Get the system clock time.                              *
@@ -57,7 +58,7 @@ CMSSYS   CSECT
 ***********************************************************************
          ENTRY @@DEBUG
 @@DEBUG  DS    0H
-         L     R15,0(R1)      get the desired return code
+         L     R15,0(,R1)     get the desired return code
          BR    R14            return to our caller
          EJECT
 ***********************************************************************
@@ -73,15 +74,15 @@ CMSSETNU DS    0H
          LA    R15,CMSSETNU-CMSSYS
          SLR   R12,R15
          USING NUCON,0
-         L     R5,0(R1)       get Address
-         L     R3,4(R1)       get Value
+         L     R5,0(,R1)      get Address
+         L     R3,4(,R1)      get Value
          IPK   ,
          SPKA  0
          SSM   *+1
-         ST    R3,0(R5)       Save Value
+         ST    R3,0(,R5)      Save Value
          SPKA  0(R2)
          SSM   =X'FF'
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
          EJECT
@@ -98,8 +99,8 @@ CMSSETFL DS    0H
          LA    R15,CMSSETFL-CMSSYS
          SLR   R12,R15
          USING NUCON,0
-         L     R5,0(R1)       get Flag
-         L     R3,4(R1)       get Value
+         L     R5,0(,R1)      get Flag
+         L     R3,4(,R1)      get Value
          LTR   R3,R3
          BZ    SETFOFF        branch to reset flag
          IPK   ,
@@ -121,7 +122,7 @@ SETFOFF  DS    0H
 SETFDONE DS    0H
          SPKA  0(R2)
          SSM   =X'FF'
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
          EJECT
@@ -145,8 +146,8 @@ SETFDONE DS    0H
          SLR   R12,R15
          USING CMSSYS,R12
          MVC   ATTNPL,=CL8'ATTN'
-         L     R6,0(R1)       R6 is start of line to stack
-         LA    R3,LINELEN(R6) last possible char to stack
+         L     R6,0(,R1)      R6 is start of line to stack
+         LA    R3,LINELEN(,R6) last possible char to stack
          LA    R2,1           loop increment
          LR    R4,R6          start of line to stack
 ATTN1    DS    0H             determine the length of the line
@@ -158,7 +159,7 @@ ATTN2    DS    0H             we have the end of the line
          ST    R6,ATTNLN      put line addr in ATTN plist
          STC   R4,ATTNLN      put line length in ATTN plist
 * Now check for FIFO or LIFO.
-         L     R2,4(R1)       get 'order'
+         L     R2,4(,R1)      get 'order'
          LTR   R2,R2          FIFO or LIFO?
          BZ    ATTN3          LIFO it is
          MVC   ATTNOD(4),=C'FIFO'
@@ -202,14 +203,166 @@ ATTNRT   DS    0H
          LA    R15,@@SVC202-CMSSYS
          SLR   R12,R15
          LR    R2,R1          save C parameter list
-         L     R1,0(R2)       plist
-         L     R0,4(R2)       eplist
+         L     R1,0(,R2)      plist
+         L     R0,4(,R2)      eplist
          ICM   R1,8,11(R2)    CALLTYPE flag byte
          SVC   202            call the command
          DC    AL4(*+4)       error address
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
+         EJECT
+         ENTRY @@CMSCMD
+***********************************************************************
+* @@CMSCMD  Entry Point                                               *
+* Invoke a CMS system service or command.  Both a standard and        *
+* extended parameter list are passed to the command.                  *
+*                                                                     *
+* Syntax is:                                                          *
+*    int __CMSCMD(char * cmdline, int calltype)                       *
+* where:                                                              *
+*    cmdline   is a pointer to the command line to be executed.       *
+*    calltype  specifies the type of call:                            *
+*               0   indicates the command is to be invoked as a       *
+*                   function.                                         *
+*               1   indicates the command is invoked as if from a CMS *
+*                   EXEC.  For example, if you want to invoke ABC     *
+*                   EXEC you must                                     *
+*                   code 'EXEC ABC'.                                  *
+*              11   indicates the command is invoked as if typed by   *
+*                   the user at the terminal.                         *
+* returns:                                                            *
+*    (int)     Return code from the invoked service or command.       *
+***********************************************************************
+@@CMSCMD DS    0H
+         STM   R14,R12,12(R13)
+         LR    R12,R15
+         LA    R15,@@CMSCMD-CMSSYS
+         SLR   R12,R15        Get address of CMSSYS in R12
+         LR    R11,R1         Save original parameter list address
+         LA    R0,EPWRKLEN    Get length of workspace required
+         DMSFREE DWORDS=(0),TYPE=USER,ERR=CMDFAIL Get workspace
+         LR    R9,R1          use R9 to address workspace
+         USING EPWRKSPC,R9    map workspace
+         L     R4,0(,R11)     get the command line string
+         LA    R3,256(,R4)    don't look for terminator forever
+         LA    R2,1           loop increment
+CMD1     DS    0H             find first non-blank character
+         CLI   0(R4),X'00'    look for C terminator
+         BE    NOCMD          no command present
+         CLI   0(R4),C' '     is this a space?
+         BNE   CMD2           found first character in command
+         BXLE  R4,R2,CMD1     keep looping if not
+         B     NOCMD          no command found after 256 characters
+CMD2     DS    0H
+         LA    R3,LINELEN(,R4) last character of longest command
+         ST    R4,EPWCMD      save address of start of command
+         XC    EPWARGB(12),EPWARGB zero remainder of EPLIST
+         LA    R5,EPWTOKPL    tokens go here
+* ---------------------------------------------------------------------
+* Loop through the words in the command line, copy them into EWTOKPL
+* and uppercase them.  In this section:
+*    R5  is where in EWTOKPL next token goes
+*    R4  is the next byte in cmdline to scan
+*    R3  is the last character of the longest possible command
+*    R2  is the scan increment
+* At this point we are at the beginning of the next argument.
+* ---------------------------------------------------------------------
+TOKSCAN  DS    0H
+         LR    R6,R4          save start of this token
+TOKSCAN1 DS    0H
+         CLI   0(R4),C' '     look for end of this argument
+         BE    TOKSCAN2       found it
+         CLI   0(R4),C'('     a paren could end it too
+         BE    TOKSCAN2       found it
+         CLI   0(R4),C')'     so could a close paren
+         BE    TOKSCAN2       found it
+         CLI   0(R4),X'00'    c string terminator?
+         BE    TOKSCAN2       that'll do it too
+         BXLE  R4,R2,TOKSCAN1 keep looping if not
+TOKSCAN2 DS    0H             we are at the end of the argument
+         LR    R7,R4          point to 1st byte after argument
+         SR    R7,R6          get length of this argument
+         BNZ   TOKSCAN3       if len > 0, copy it
+         CLI   0(R4),X'00'    c string terminator?
+         BE    TOKFENCE       finish up and add fence
+         LA    R4,1(,R4)      this arg is a paren, must bump scan ptr
+         B     TOKSCAN4
+TOKSCAN3 DS    0H
+         BCTR  R7,0           less 1 for EX of MVC
+TOKSCAN4 DS    0H
+         MVC   0(8,R5),=CL8' ' Blank token first
+         EX    R7,COPYTOK     copy token to EPWTOKPL
+         OC    0(8,R5),=CL8' ' Uppercase it
+         LA    R5,8(,R5)      bump token pointer
+NEXTTOK  DS    0H             scan past any blanks before next arg
+         CLI   0(R4),C' '     look for start of next argument
+         BNE   NEXTTOK2       found start of arg or end of list
+         BXLE  R4,R2,NEXTTOK  keep looping if not
+NEXTTOK2 DS    0H
+         ICM   R7,B'1111',EPWARGB Load register and test for zero
+         BNZ   TOKSKIP        we've already found first argument
+         ST    R4,EPWARGB    store start of first argument
+TOKSKIP  DS    0H
+         CLI   0(R4),X'00'    are we at the end?
+         BE    TOKFENCE       yes, we are getting there
+         CLI   0(R4),C'('     but wait, we could be at a paren
+         BE    NEXTTOK3
+         CLI   0(R4),C')'     or a close paren
+         BE    NEXTTOK3
+         B     TOKSCAN
+NEXTTOK3 DS    0H
+         LR    R6,R4          save start of this argument
+         LA    R4,1(,R4)      point to character after paren
+         B     TOKSCAN2       process the paren as an argument
+COPYTOK  MVC   0(0,R5),0(R6)  copy token
+TOKFENCE DS    0H
+         MVC   0(8,R5),=X'FFFFFFFFFFFFFFFF'
+         ICM   R7,B'1111',EPWARGB did we find arguments?
+         BZ    TOKDONE        no sign of any
+         ST    R4,EPWARGE     store end of argument list
+TOKDONE  DS    0H
+* ---------------------------------------------------------------------
+* At last we issue the CMS command and return to our caller.
+* ---------------------------------------------------------------------
+         LA    R0,EPWEPLST    set the extended plist
+         LA    R1,EPWTOKPL    set the tokenized plist
+         ICM   R1,B'1000',7(R11) get the CALLTYPE flag byte
+         CLM   R1,B'1000',=X'0B' Is it calltype CMS?
+         BNE   CMDCALL        No, use normal call
+*------------------------------------------------------------*
+* For a subcommand call, R1 point to the subcommand          *
+* environment name, followed by a plist fence.               *
+* The extended plist 1st word points to the subcommand name  *
+* The 2nd word points to the beginning of the argument       *
+* string. The third word points past the last argument.      *
+*------------------------------------------------------------*
+         LA    R1,CMSENV      Issue a CMS subcommand
+         MVC   EPWARGB,EPWCMD Adjust second word of EP
+         ST    R1,EPWCMD      Adjust first word
+         DROP  R9             Finished with workspace
+         ICM   R1,B'1000',=X'02'  Subcommand call
+CMDCALL  DS    0H
+         SVC   202            call the command
+         DC    AL4(*+4)       error address
+         ST    R15,16(,R13)   save returned command status
+         LA    R0,EPWRKLEN    get length of workspace
+         LR    R1,R9          get address of workspace
+         DMSFRET DWORDS=(0),LOC=(1),ERR=CMDFAIL Free workspace
+CMDREST  DS    0H
+         LM    R14,R12,12(R13) restore the registers
+         BR    R14            return to our caller
+NOCMD    DS    0H
+         XR    R15,R15
+CMDRTRC  DS    0H
+         ST    R15,16(,R13)
+         B     CMDREST
+CMDFAIL  DS    0H
+         L     R15,=F'-4'
+         B     CMDRTRC
+CMSENV   DS    0D
+         DC    CL8'CMS'
+         DC    8X'FF'
          EJECT
 ***********************************************************************
 * @DMSFREE                                                            *
@@ -228,14 +381,14 @@ ATTNRT   DS    0H
          LR    R12,R15
          LA    R15,@DMSFREE-CMSSYS
          SLR   R12,R15
-         L     R0,0(R1)       get number of dounlewords to allocate
+         L     R0,0(,R1)      get number of dounlewords to allocate
 * Use DMSFREE to allocate the memory.
          DMSFREE DWORDS=(0),TYPE=USER,ERR=DMSFREE2
          LTR   R15,R15        did we get the memory?
          BNZ   DMSFREE2       no, quit now
          LR    R15,R1
 DMSFREE1 DS    0H
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
 DMSFREE2 DS    0H             no memory
@@ -261,13 +414,13 @@ DMSFREE2 DS    0H             no memory
          LR    R12,R15
          LA    R15,@DMSFRET-CMSSYS
          SLR   R12,R15
-         L     R0,4(R1)       get doublewords to return
-         L     R1,0(R1)       get address of memory to return
+         L     R0,4(,R1)      get doublewords to return
+         L     R1,0(,R1)      get address of memory to return
 * Use DMSFRET to return the memory.
          DMSFRET DWORDS=(0),LOC=(1),ERR=DMSFRET2
          SR    R15,R15        indicate all OK
 DMSFRET1 DS    0H
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
 DMSFRET2 DS    0H             no memory
@@ -303,13 +456,13 @@ DMSFRET2 DS    0H             no memory
          LA    R15,@@DMSFRE-CMSSYS
          SLR   R12,R15
          USING CMSSYS,R12
-         L     R2,0(R1)       get number of bytes to allocate
+         L     R2,0(,R1)      get number of bytes to allocate
          SRL   R2,3           convert to doublewords
-         LA    R0,2(R2)       round up plus 1 for housekeeping
-         L     R2,4(R1)       get type parameter
+         LA    R0,2(,R2)      round up plus 1 for housekeeping
+         L     R2,4(,R1)      get type parameter
 * ---------------------------------------------------------------------
 * For debugging...
-         L     R3,0(R1)       get number of bytes to allocate
+         L     R3,0(,R1)      get number of bytes to allocate
          L     R4,=F'1000000'
          SR    R4,R3
          BP    OKAY
@@ -334,9 +487,9 @@ NUCMEM   DS    0H
 POSTMEM  DS    0H
          LTR   R15,R15        did we get the memory?
          BNZ   NOMEMORY       no, quit now
-         ST    R0,0(R1)       store number of doublewords allocated
+         ST    R0,0(,R1)      store number of doublewords allocated
          MVC   4(4,R1),=X'C7C3C300' store marker: "GCC" C string
-         LA    R15,8(R1)      here is where user memory starts
+         LA    R15,8(,R1)     here is where user memory starts
          B     FREERET        remove this for debugging message
 * ---------------------------------------------------------------------
 * For debugging...
@@ -377,7 +530,7 @@ NOMEMORY DS    0H
          LA    R15,@@DMSFRT-CMSSYS
          SLR   R12,R15
          USING CMSSYS,R12
-         L     R1,0(R1)       get address of memory to return
+         L     R1,0(,R1)      get address of memory to return
          LTR   R1,R1          check the address
          BP    FRTOK
          MVC   LINEDITL(LINEDISZ),LINEDITP Set pattern
@@ -400,7 +553,7 @@ FRTOK    DS    0H
          LA    R15,5          indicate memory overwrite
          B     FRTEND
 ALLSWELL DS    0H
-         L     R0,0(R1)       get doublewords to return
+         L     R0,0(,R1)      get doublewords to return
 * Use DMSFRET to return the memory.
          DMSFRET DWORDS=(0),LOC=(1)
          B     FRTEND
@@ -438,10 +591,10 @@ FRTEND   DS    0H
          LR    R12,R15
          LA    R15,@@FSCLOS-CMSSYS
          SLR   R12,R15
-         L     R8,0(R1)       get FSCB
+         L     R8,0(,R1)      get FSCB
 * Use FSCLOSE to close the file.
          FSCLOSE FSCB=(R8)
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
          EJECT
@@ -466,7 +619,7 @@ FRTEND   DS    0H
          LA    R15,@@FSERAS-CMSSYS
          SLR   R12,R15
          USING CMSSYS,R12
-         L     R2,0(R1)       get address of fileid
+         L     R2,0(,R1)      get address of fileid
          LA    R8,WORKFSCB    FSCB is built here
          XC    0(FSCBLEN,R8),0(R8)
          MVI   FSCBFN,C' '
@@ -529,7 +682,7 @@ FRTEND   DS    0H
          FSOPEN BUFFER=(R3),BSIZE=(R4),RECFM=(R5),                     *
                NOREC=(R6),RECNO=(R7),                                  *
                FSCB=(R8)
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
          EJECT
@@ -573,7 +726,7 @@ POINTRD  DS    0H
 * Use FSPOINT to set the read pointer
          FSPOINT FSCB=(R8),RDPNT=(R3)
 POINTED  DS    0H
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
          EJECT
@@ -646,8 +799,8 @@ READREC  DS    0H
 * Use FSREAD to read from the file, specifying the recnum
          FSREAD FSCB=(R8),RECNO=(R4)
 DONEREAD DS    0H
-         ST    R0,0(R5)       return number of bytes read
-         L     R14,12(R13)    restore our return address
+         ST    R0,0(,R5)      return number of bytes read
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
          EJECT
@@ -762,7 +915,7 @@ DONEREAD DS    0H
 WRECNO   DS    0H
          FSWRITE FSCB=(R2),RECNO=(R3),BSIZE=(R4)
 DONEWRIT DS    0H
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
          EJECT
@@ -784,16 +937,16 @@ DONEWRIT DS    0H
          LR    R12,R15
          LA    R15,@@GETCLK-CMSSYS
          SLR   R12,R15
-         L     R2,0(R1)       get address of 'clock'
+         L     R2,0(,R1)      get address of 'clock'
          STCK  0(R2)          store the clock there
-         L     R4,0(R2)       calculate seconds since 1/1/1970
-         L     R5,4(R2)
+         L     R4,0(,R2)      calculate seconds since 1/1/1970
+         L     R5,4(,R2)
          SRDL  R4,12
          SL    R4,=X'0007D910'
          D     R4,=F'1000000'
          SL    R5,=F'1220'
          LR    R15,R5         and return it
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
          EJECT
@@ -827,8 +980,8 @@ DONEWRIT DS    0H
          LA    R15,@@PRINTL-CMSSYS
          SLR   R12,R15
          USING CMSSYS,R12
-         L     R6,0(R1)       R6 is start of line to display
-         LA    R3,151(R6)     last possible char to display
+         L     R6,0(,R1)      R6 is start of line to display
+         LA    R3,151(,R6)    last possible char to display
          LA    R2,1           loop increment
          LR    R4,R6          start of line to display
 PRINTL1  DS    0H
@@ -876,7 +1029,7 @@ PRINTLPL EQU   *-PRINTLP
          LA    R15,@@PUNCHC-CMSSYS
          SLR   R12,R15
          USING CMSSYS,R12
-         L     R6,0(R1)       R6 is start of line to punch
+         L     R6,0(,R1)      R6 is start of line to punch
 * Use PUNCHC to punch the card.
 *        PUNCHC (6)
          MVC   PUNCHCE(PUNCHCPL),PUNCHCP set pattern
@@ -920,9 +1073,9 @@ PUNCHCPL EQU   *-PUNCHCP
          LA    R15,@@RDCARD-CMSSYS
          SLR   R12,R15
          USING CMSSYS,R12
-         L     R2,0(R1)       get buffer address
-         L     R4,4(R1)       get address of length variable
-         L     R3,0(R4)       length of line to read
+         L     R2,0(,R1)      get buffer address
+         L     R4,4(,R1)      get address of length variable
+         L     R3,0(,R4)      length of line to read
 * Use RDCARD to read the line.
 *        RDCARD (R2),(R3)
          MVC   RDCARDE(RDCARDPL),RDCARDP set pattern
@@ -930,7 +1083,7 @@ PUNCHCPL EQU   *-PUNCHCP
          BR    R9
 RDCARDND DS    0H             it returns here
 *
-         ST    R0,0(R4)       return number of bytes read in 'len'
+         ST    R0,0(,R4)      return number of bytes read in 'len'
          SR    R1,R1
          STC   R1,0(R3,R2)    place null character at end of line
          PDPEPIL
@@ -959,7 +1112,7 @@ RDCARDPL EQU   *-RDCARDP
          LA    R15,@@RDTERM-CMSSYS
          SLR   R12,R15
          USING CMSSYS,R12
-         L     R2,0(R1)       get buffer address
+         L     R2,0(,R1)      get buffer address
 * Use RDTERM to read the line.
 *        RDTERM (2),EDIT=NO
          MVC   RDTERME(RDTERMPL),RDTERMP set pattern
@@ -997,7 +1150,7 @@ RDTERMPL EQU   *-RDTERMP
          LA    R15,@@RDDRCT-CMSSYS
          SLR   R12,R15
          USING CMSSYS,R12
-         L     R2,0(R1)       get buffer address
+         L     R2,0(,R1)      get buffer address
 * Use RDTERM to read the line.
 *        RDTERM (2),EDIT=NO,TYPE=DIRECT
          MVC   RDDRCTE(RDDRCTPL),RDDRCTP set pattern
@@ -1055,11 +1208,11 @@ RDDRCTPL EQU   *-RDDRCTP
          USING CMSSYS,R12
          MVC   RENAMEPL(8),=CL8'RENAME'
          MVC   RENFENCE(8),=XL8'FFFFFFFFFFFFFFFF'
-         L     R2,0(R1)       get address of old fileid
+         L     R2,0(,R1)      get address of old fileid
          MVI   RENOLDN,C' '
          MVC   RENOLDN+1(24-1),RENOLDN
          OC    RENOLDN(18),0(R2) copy fileid and uppercase
-         L     R2,4(R1)       get address of new fileid
+         L     R2,4(,R1)      get address of new fileid
          MVI   RENNEWN,C' '
          MVC   RENNEWN+1(24-1),RENNEWN
          OC    RENNEWN(18),0(R2) copy fileid and uppercase
@@ -1093,7 +1246,7 @@ RENAMERT DS    0H
          USING NUCON,R0
          LH    R15,NUMFINRD   put number of lines in stack in R15
 STKDONE  DS    0H
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
 SENTRIES DS    0D
@@ -1116,7 +1269,7 @@ SENTRIES DS    0D
          LA    R15,@@WAITT-CMSSYS
          SLR   R12,R15
          WAITT
-         L     R14,12(R13)    restore our return address
+         L     R14,12(,R13)   restore our return address
          LM    R0,R12,20(R13) restore the registers
          BR    R14            return to our caller
          EJECT
@@ -1145,9 +1298,9 @@ SENTRIES DS    0D
          LA    R15,@@WRTERM-CMSSYS
          SLR   R12,R15
          USING CMSSYS,R12
-         L     R6,0(R1)       R6 is start of line to display
-         L     R7,4(R1)       get edit setting
-         LA    R3,129(R6)     last possible char to display
+         L     R6,0(,R1)      R6 is start of line to display
+         L     R7,4(,R1)      get edit setting
+         LA    R3,129(,R6)    last possible char to display
          LA    R2,1           loop increment
          LR    R4,R6          start of line to display
 WRTERM1  DS    0H
@@ -1307,7 +1460,16 @@ OUTBUF   DS    CL256          Terminal buffer
 CMSSVALN EQU   *-CMSCRAB      Save area length
 *
 FSCB     FSCBD                File System Control Block
-FSCBLEN  EQU   *-FSCBD        Length of FSCB                            
+FSCBLEN  EQU   *-FSCBD        Length of FSCB
+*
+EPWRKSPC DSECT
+EPWTOKPL DS    32D            CMS tokenized plist
+EPWEPLST DS    0F             CMS extended parameter list
+EPWCMD   DS    A              address of the command
+EPWARGB  DS    A              address of beginning of the arguments
+EPWARGE  DS    A              address of character after the arguments
+EPWUWORD DS    F              the user word
+EPWRKLEN EQU   (*-EPWRKSPC+7)/8 Length of workspace in doublewords
          NUCON ,
          REGEQU ,
          END

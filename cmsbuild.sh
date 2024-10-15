@@ -56,21 +56,33 @@ truncate -s-80 gcclibsrc.vmarc
 # Put tools in the T drive
 herccontrol "/COPYFILE GCCASM EXEC A = = T (REPLACE" -w "^Ready"
 herccontrol "/ERASE GCCASM EXEC A" -w "^Ready"
+herccontrol "/COPYFILE GCCASM HELPCMD A = = T (REPLACE" -w "^Ready"
+herccontrol "/ERASE GCCASM HELPCMD A" -w "^Ready"
 
 herccontrol "/COPYFILE GCCBUILD EXEC A = = T (REPLACE" -w "^Ready"
 herccontrol "/ERASE GCCBUILD EXEC A" -w "^Ready"
+herccontrol "/COPYFILE GCCBUILD HELPCMD A = = T (REPLACE" -w "^Ready"
+herccontrol "/ERASE GCCBUILD HELPCMD A" -w "^Ready"
 
 herccontrol "/COPYFILE GCCCOMP EXEC A = = T (REPLACE" -w "^Ready"
 herccontrol "/ERASE GCCCOMP EXEC A" -w "^Ready"
+herccontrol "/COPYFILE GCCCOMP HELPCMD A = = T (REPLACE" -w "^Ready"
+herccontrol "/ERASE GCCCOMP HELPCMD A" -w "^Ready"
 
 herccontrol "/COPYFILE GCCGEN EXEC A = = T (REPLACE" -w "^Ready"
 herccontrol "/ERASE GCCGEN EXEC A" -w "^Ready"
+herccontrol "/COPYFILE GCCGEN HELPCMD A = = T (REPLACE" -w "^Ready"
+herccontrol "/ERASE GCCGEN HELPCMD A" -w "^Ready"
 
 herccontrol "/COPYFILE GCCGENM EXEC A = = T (REPLACE" -w "^Ready"
 herccontrol "/ERASE GCCGENM EXEC A" -w "^Ready"
+herccontrol "/COPYFILE GCCGENM HELPCMD A = = T (REPLACE" -w "^Ready"
+herccontrol "/ERASE GCCGENM HELPCMD A" -w "^Ready"
 
 herccontrol "/COPYFILE GCCSRCH EXEC A = = T (REPLACE" -w "^Ready"
 herccontrol "/ERASE GCCSRCH EXEC A" -w "^Ready"
+herccontrol "/COPYFILE GCCSRCH HELPCMD A = = T (REPLACE" -w "^Ready"
+herccontrol "/ERASE GCCSRCH HELPCMD A" -w "^Ready"
 
 herccontrol "/ipl cms" -w "^CMS"
 herccontrol "/" -w "^Ready;"

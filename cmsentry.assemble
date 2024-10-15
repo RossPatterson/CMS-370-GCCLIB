@@ -12,26 +12,24 @@
 * Released to the public domain.                                 *
 ******************************************************************
 CMSENTRY CSECT
-         ENTRY @@CRT0
 ***********************************************************************
-* @@CRT0 Entry Point                                                  *
-* We enter here from CMS.  This is the main entry point for a module  *
-* compiled by GCC.  Allocate the bootstrap GCC stack, and call        *
-* __cstub which prepares for the RESLIB hyperjump, which calls __ctart*
-* which sets up the runtime strucures & parameters, which finally     *
-* calls main().                                                       *
+* This entry point is called by GCCCRT0 for programs linked with the  *
+* GCCLIB TXTLIB or by CMSCRT0 for programs linked with the GCCCMS     *
+* TXTLIB. Here we allocate the initial GCC stack and call __cstub in  *
+* CMSRTSTB C to initialize the environment. That routine calls        *
+* __cstart in CMSRUNTM C to complete initialization and pass control  *
+* to the user program.                                                *
+*                                                                     *
 * On return it frees the bootstrap stack and returns to CMS.          *
 ***********************************************************************
-@@CRT0   DS    0H
          USING CMSCRAB,R13
          STM   R14,R12,GR14
          LR    R12,R15
-         USING @@CRT0,R12     establish addressability
-         LA    R4,18*4(,R13)  Point to a plist build area
-*                               just past our saved registers
-*                                 in our R13 13 Dword area
-         ST    R1,0(,R4)      Set entry PLIST ptr as parm 1
-         ST    R0,4(,R4)      Set entry EPLIST ptr as parm 2
+         USING CMSENTRY,R12   establish addressability
+* Our caller used the section of our nine doubleword R13 savearea
+* just past our saved registers to build a plist to pass to
+* __cstub in CMSRTSTB C.
+         LA    R4,18*4(,R13)  Point to plist built by our caller
 * --------------------------------------------------------------------
 * Set up the bootstrap GCC stack.
 * --------------------------------------------------------------------
@@ -66,6 +64,9 @@ LAUNCH   DS    0H
          B     THATSALL       branch to clean up
          SPACE
 NOMEM    DS    0H             memory allocation failed
+         LA    R2,(STACKLEN+7)/8 stack length in doublewords
+         DMSERR TEXT='Error allocating ...... doublewords for C stack',+
+               SUB=(DEC,(R2)),NUM=57,LET=E,CSECT=GCC,DOT=NO
          LA    R15,57         perhaps should issue an error message
          B     RETURN
          LTORG

@@ -1,0 +1,24 @@
+GCCASM                                                           MAINTC command
+ 
+Use the GCCASM command to compile any GCC assembler language source file.
+ 
+The format of the GCCASM command is:
++----------+------------------------------------------------------------------+
+| GCCASM   | fn  [ options .... ]                                             |
++----------+------------------------------------------------------------------+
+ 
+where:
+ 
+fn       is the filename of the source file to be assembled and the filename
+         of assembled output files.  The file must have fixed-length,
+         80-character records.  By default, the assembler expects a CMS file
+         with a filetype of ASSEMBLE.
+ 
+options  are valid options for the CMS ASSEMBLE command (See HELP ASSEMBLE).
+ 
+Usage Notes:
+ 
+1. Set up the proper minidisk search order with the GCCSRCH command before
+   using this command.
+ 
+2. The GCCASM produces an output TEXT file from the compilation on the A-disk.

@@ -1,0 +1,24 @@
+ TITLE 'GCCCRT0 - CMS library entry point for GCCLIB TXTLIB'
+**************************************************************
+* A user C program linked with the GCCLIB TXTLIB enters here.*
+* This empty routine transfers control directly to the       *
+* CMSENTRY program to initialize the runtime environment.    *
+* If the C program had been linked with the GCCCMS TXTLIB,   *
+* the CMSCRT0 program would have been called instead of this *
+* entry point.                                               *
+**************************************************************
+GCCCRT0  CSECT
+         ENTRY @@CRT0
+@@CRT0   DS    0H
+         USING GCCCRT0,15
+* We will use the section of our nine doubleword R13 savearea
+* just past our saved registers to build a plist to pass to
+* __cstub in CMSRTSTB C from CMSENTRY ASSEMBLE.
+*
+         ST    1,18*4(,13)    Set entry PLIST ptr as parm 1
+         ST    0,19*4(,13)    Set entry EPLIST ptr as parm 2
+         XC    20*4(4,13),20*4(13)  Set 0 as parm 3
+         EXTRN  CMSENTRY
+         L      15,=A(CMSENTRY)
+         BR     15            On to CMSENTRY
+         END

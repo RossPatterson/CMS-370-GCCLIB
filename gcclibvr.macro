@@ -1,0 +1,16 @@
+******************************************************************
+* GCCLIBVR MACRO                                                 *
+* This macro defines the minimum runtime library version which   *
+* programs built using it need in order to function correctly.   *
+*                                                                *
+* Part of GCCLIB, the "Native CMS" GCC Runtime Library           *
+*                                                                *
+* Released to the public domain.                                 *
+******************************************************************
+         MACRO
+         GCCLIBVR
+         SPACE
+MAJORVR  EQU   1
+MINORVR  EQU   0
+REVISION EQU   1
+         MEND

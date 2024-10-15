@@ -52,6 +52,14 @@ struct GCCCRAB {
     int isproc;
     int argc;
     int debug;
+    void *gcclibvt;                /* Address of resident GCCLIB vector table */
+    int *randomseed;               /* for rand() and srand() */
+    int *tempcounter;              /* for tmpnam() */
+    char *tempname;                /* for tmpnam() */
+    struct malloc_params *mparams; /* Various memory allocation paramters */
+    char *atresult;                /* for asctime() */
+    struct tm *gmtimetm;           /* for gmtime() */
+    char *strfbuf;                 /* for strftime() */
 };
 
 /* To get the addresses of the crab */

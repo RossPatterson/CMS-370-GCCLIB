@@ -32,7 +32,7 @@ typedef struct FPOS_T fpos_t;
 #define _IOLBF 2
 #define _IONBF 3
 #define BUFSIZ (16*1024)
-
+#define FOPEN_MAX 20
 #define L_tmpnam 21 /* tmpname() */
 
 /**************************************************************************************************/

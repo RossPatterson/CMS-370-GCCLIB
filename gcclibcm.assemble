@@ -1,0 +1,137 @@
+ TITLE 'GCCLIBCM - GCCLIB command interface to GCC library facilities'
+***********************************************************************
+***********************************************************************
+GCCLIBCM CSECT
+         ENTRY GCCLIBCM
+         STM   R14,R12,12(R13)
+         LR    R12,R15
+         USING GCCLIBCM,R12
+* ---------------------------------------------------------------------
+* ANCHOR processing
+* ---------------------------------------------------------------------
+         CLC   =CL8'ANCHOR',8(R1) Request for runtime anchor?
+         BNE   LBNOANCH           Go try other types if not
+         L     R15,=A(CMSVTAB)    Address of CMSVTAB table
+         EXTRN CMSVTAB
+         B     LBRETURN           Return address to the C program
+LBNOANCH DS    0H
+* ---------------------------------------------------------------------
+* VERSION processing
+* ---------------------------------------------------------------------
+         CLC   =CL8'VERSION',8(R1) Request for version info?
+         BNE   LBNOTVER           Go try other types if not
+         LA    R0,WORKSIZD
+         DMSFREE DWORDS=(0),TYPE=USER
+         ST    R13,4(,R1)         Chain in
+         ST    R1,0(,R13)             new savearea
+         LR    R13,R1
+         USING WORKAREA,R13
+*
+         MVC   VERSION(L'VERSIONT),VERSIONT Set response text
+         LA    R5,VERSION+L'VERSIONT Start of version value
+*
+         LA    R2,MAJORVR         Major version
+         BAL   R14,BIN2CHAR       To character format
+         MVC   0(*-*,R5),0(R3)
+         EX    R4,*-6             Set Major version in message
+         LA    R5,1(R4,R5)        Skip over it
+         MVI   0(R5),C'.'         Delimiter
+         LA    R5,1(,R5)          Skip over it
+*
+         LA    R2,MINORVR         Minor version
+         BAL   R14,BIN2CHAR       To character format
+         MVC   0(*-*,R5),0(R3)
+         EX    R4,*-6             Set Major version in message
+         LA    R5,1(R4,R5)        Skip over it
+         MVI   0(R5),C'.'         Delimiter
+         LA    R5,1(,R5)          Skip over it
+*
+         LA    R2,REVISION        Revision level
+         BAL   R14,BIN2CHAR       To character format
+         MVC   0(*-*,R5),0(R3)
+         EX    R4,*-6             Set Major version in message
+         LA    R5,1(R4,R5)        Skip over it
+*
+         LA    R4,VERSION
+         SR    R5,R4              Length of the message
+*        WRTERM (R4),(R5),EDIT=YES
+         MVC   WRTRM1E(WRTRM1PL),WRTRM1P set pattern
+         LA    R9,WRTRM1E     branch there to call it
+         BR    R9
+WRTRM1ND DS    0H             it returns here
+*
+         LR    R1,R13         Workarea address
+         L     R13,4(,R13)    Unchain save area
+         LA    R0,WORKSIZD
+         DMSFRET DWORDS=(0),LOC=(1)  Release the savearea
+*
+         LM    R14,R12,12(R13)
+         SR    R15,R15
+         BR    R14
+* ---------------------------------------------------------------------
+* Add new processing here
+* ---------------------------------------------------------------------
+LBNOTVER DS    0H
+* ---------------------------------------------------------------------
+* Error processing
+* ---------------------------------------------------------------------
+ERRCALL  DS    0H
+         LA    R15,1          Unrecognized call type
+LBRETURN DS    0H
+         L     R14,12(,R13)
+         LM    R0,R12,20(R13)
+         BR    R14            Return to caller
+         EJECT
+* ---------------------------------------------------------------------
+* Binary to EBCDIC decimal conversion
+* ---------------------------------------------------------------------
+BIN2CHAR DS    0H
+         CVD   R2,DWORD           Binary to packed decimal
+         UNPK  DECVALUE,DWORD+3(5) To character
+         OI    DECVALUE+7,C'0'       To printable
+         LA    R3,DECVALUE
+         LA    R4,7               Suppress up to 7 leading 0s
+FINDNON0 DS    0H
+         CLI   0(R3),C'0'
+         BNE   HAVENON0
+         LA    R3,1(,R3)
+         BCT   R4,FINDNON0
+HAVENON0 DS    0H
+* R3 has a pointer to the first non-zero digit encountered,
+*    or to the last '0' if the number was 0.
+* R4 has the length of the significant digits - 1
+         BR    R14
+* ---------------------------------------------------------------------
+* Constants and literal pool
+* ---------------------------------------------------------------------
+VERSIONT DC    C'GCCLIB Version '
+*
+         USING WRTRM1P,R9
+WRTRM1P  WRTERM (R4),(R5),EDIT=YES
+         DROP  R9
+         B     WRTRM1ND
+WRTRM1PL EQU   *-WRTRM1P
+*
+         LTORG ,
+         EJECT
+* ---------------------------------------------------------------------
+* Workarea
+* ---------------------------------------------------------------------
+WORKAREA DSECT
+         DS    18A            R13 savearea
+DWORD    DS    D
+DECVALUE DS    CL8
+VERSION  DS    CL40
+***
+         USING WRTRM1E,R9
+WRTRM1E  WRTERM (R4),(R5),EDIT=YES
+         DROP  R9
+         B     WRTRM1ND
+WORKSIZD EQU   (*-WORKAREA+7)/8
+         EJECT
+* ---------------------------------------------------------------------
+* Data structures
+* ---------------------------------------------------------------------
+         GCCLIBVR ,
+         REGEQU ,
+         END    GCCLIBCM

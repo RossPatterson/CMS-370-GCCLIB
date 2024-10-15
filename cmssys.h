@@ -703,9 +703,9 @@ void *__dmsfre(int bytes, int type);
 /*    1.  If you allocate NUCLEUS memory, your program must be generated with the SYSTEM option.  */
 /*        Note that if such a program abnormally terminates, CMS does not release this memory.    */
 /**************************************************************************************************/
-int __dmsfrt(void *memory, int doublewords);
+int __dmsfrt(void *memory);
  
-#define CMSmemoryFree(s1, s2) (__dmsfrt((s1),(s2))
+#define CMSmemoryFree(s1) (__dmsfrt((s1)))
  
 /**************************************************************************************************/
 /* int CMSprintLine(char * line)                                                                  */
