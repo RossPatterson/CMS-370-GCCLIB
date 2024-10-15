@@ -1,5 +1,8 @@
 GCCLIB Change LOG
 =================
+      - Update build tools for GitHub changes
+
+1.0.1 -  5 Jul 2022
 
 1.0.0 - 15 Apr 2021
 F0054 - Updated Build process for CE
