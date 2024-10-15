@@ -1,0 +1,38 @@
+GCCGEN                                                           MAINTC command
+ 
+Use the GCCGEN command to create the runtime files for the GCC runtime library.
+ 
+The format of the GCCGEN command is:
++----------+------------------------------------------------------------------+
+| GCCGEN   |                                                                  |
++----------+------------------------------------------------------------------+
+ 
+Usage Notes:
+ 
+1. Set up the proper minidisk search order with the GCCSRCH command before
+   using this command.
+ 
+2. The GCCGEN EXEC creates the following files on the A disk:
+ 
+   GCCLIB TXTLIB
+ 
+          Contains runtime TEXT files which are combined with the output
+          TEXT file from the GCC command by the CMS LOAD command..
+          The runtime files in this library use CMS native system and I/O
+          services to execute a user C program. Issue HELP GCCLIB for more
+          details.
+ 
+   GCCRES TXTLIB
+ 
+          Contains runtime TEXT files which are combined with the output
+          TEXT file from the GCC command by the CMS LOAD command..
+          The runtime files in this library are linked with the user program,
+          but they call memory resident versions of the routines in GCCLIB.
+          The called runtime routines reside in memory and are shared between
+          all users on the VM system.
+ 
+   GCCLIB TEXT
+ 
+          Contain runtime TEXT files which are loaded into shared memory when
+          a CMS user ID is started. One copy of these routines are shared
+          with all users on the VM system.

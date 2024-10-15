@@ -1,0 +1,31 @@
+GCCBUILD                                                         MAINTC command
+ 
+Use the GCCBUILD command to issue a set of commands to create the complete
+GCC runtime executable files.
+ 
+The format of the GCCBUILD command is:
++----------+------------------------------------------------------------------+
+| GCCBUILD |                                                                  |
++----------+------------------------------------------------------------------+
+ 
+GCCBUILD is a shorthand method to compile all the CMS GCC runtime routines.
+ 
+The following commands are issued:
+ 
+* Setup the GCC disk search order
+EXEC GCCSRCH
+*  Access the compiler output disk as A and erase all the files there
+ACCESS 194 A ( ERASE
+*  Generate the GCCLIB macro library
+EXEC GCCGENM
+*  Create a CMS EXEC file with the names of all
+*  the ASSEMBLE files
+LISTFILE * ASSEMBLE F ( EXEC
+*  Run the ASSEMBLE command to compile the files from source
+EXEC EXPLOIT EXEC GCCASM &LITERAL &FN
+*  Create a CMS EXEC file with the names of all the C files
+LISTFILE * C F ( EXEC
+*  Run the GCC command to compile the files from source
+EXEC EXPLOIT EXEC GCCCOMP &LITERAL &FN
+*  Cleanup
+ERASE CMS EXEC

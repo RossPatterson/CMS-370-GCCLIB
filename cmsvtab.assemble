@@ -2,10 +2,22 @@
 * CMSVTAB is the vector table for the memory-resident GCC runtime     *
 * routines.                                                           *
 *                                                                     *
+* The initial 16 bytes before the vector table contain the name of    *
+* the library and version information to enable the suitability of    *
+* of the library to be tested by programs proposing to make us of it. *
+*                                                                     *
 * Robert O'Hara, Redmond Washington, April 2009.                      *
 ***********************************************************************
 CMSVTAB  CSECT
+         DC    CL8'GCCLIB'
+         DC    AL1(MAJORVR)
+         DC    AL1(MINORVR)
+         DC    AL1(REVISION)
+         DC    AL1(0)
+         DC    AL4(0)
+*
          VTABLE CODE
          LTORG
+         GCCLIBVR
          REGEQU
          END

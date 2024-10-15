@@ -3,11 +3,10 @@
 * The GCCCRAB (C Runtime Anchor Block) defines the area for      *
 * for global veriables used by the GCCLIB run time library       *
 * These are declared / allocated / linked to the user program    *
-* but are made available to code in RESLIB land by passing the   *
-* address up the stack frame                                     *
+* but are made available to code in read only storage by passing *
+* the address up the stack frame                                 *
 *                                                                *
-* Part of GCCLIB - VM/370 CMS Native Std C Library;              *
-*                  A Historic Computing Toy                      *
+* Part of GCCLIB, the "Native CMS" GCC Runtime Library           *
 *                                                                *
 * Proud Contributors: See contrib memo                           *
 *                                                                *
@@ -47,6 +46,14 @@ EVALBLOK DS    F              EVALBLOK *evalblok;
 ISPROC   DS    F              int isproc;
 ARGC     DS    F              int argc;
 DEBUG    DS    F              int debug;
+GCCLIBVT DS    F              void *gcclibvt;
+RANDSEED DS    F              int *randomseed;
+TEMPCNTR DS    F              int *tempcounter;
+TEMPNAME DS    F              char *tempname;
+MPARAMS  DS    F              struct *mparams;
+ATRESULT DS    F              char *atresult;
+GMTIMETM DS    F              struct tm *gmtimetm;
+STRFBUF  DS    F              char *strfbuf;
          SPACE
 GCCGLEN  EQU   *-GCCCRAB      length of the CRAB / Global Area
          MEND

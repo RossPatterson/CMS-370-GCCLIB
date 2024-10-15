@@ -1,0 +1,15 @@
+GCCSRCH                                                          MAINTC command
+ 
+Use the GCCSRCH command to setup a minidisk search order to build and
+modify the CMS version of the GCC runtime library code.
+ 
+The format of the GCCSRCH command is:
++----------+------------------------------------------------------------------+
+| GCCSRCH  |                                                                  |
++----------+------------------------------------------------------------------+
+ 
+The minidisk search order after issuing this command is:
+ 
+MNT191  191  A    R/W     Work disk where compiled code is created
+MNT194  194  E/A  R/O     TEXT files for the compiled runtime library code
+MNT394  394  F/A  R/O     Runtime library source code
