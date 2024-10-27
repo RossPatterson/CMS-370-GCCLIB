@@ -5,13 +5,13 @@
 set -e
 
 # IPL
-herccontrol "ipl 141" -w "USER DSC LOGOFF AS AUTOLOG1"
+herccontrol "ipl 6a1" -w "USER DSC LOGOFF AS AUTOLOG1"
 herccontrol "/cp start c" -w "RDR"
 herccontrol "/cp start d class a" -w "PUN"
 
 # LOGON MAINTC
 herccontrol "/cp disc" -w "^VM/370 Online"
-herccontrol "/logon maintc maintc" -w "^CMS"
+herccontrol "/logon maintc maintc" -w "^VM Community Edition"
 herccontrol "/" -w "^Ready;"
 herccontrol "/purge rdr" -w "^Ready;"
 herccontrol "/ACCESS 394 A" -w "^Ready;"
@@ -84,19 +84,19 @@ herccontrol "/ERASE GCCSRCH EXEC A" -w "^Ready"
 herccontrol "/COPYFILE GCCSRCH HELPCMD A = = T (REPLACE" -w "^Ready"
 herccontrol "/ERASE GCCSRCH HELPCMD A" -w "^Ready"
 
-herccontrol "/ipl cms" -w "^CMS"
+herccontrol "/ipl cms" -w "^VM Community Edition"
 herccontrol "/" -w "^Ready;"
 
 herccontrol "/GCCBUILD" -w "^Ready;" -t 240
 herccontrol "/GCCGENM" -w "^Ready;"
 
-herccontrol "/ipl cms" -w "^CMS"
+herccontrol "/ipl cms" -w "^VM Community Edition"
 herccontrol "/" -w "^Ready;"
 
 herccontrol "/GCCSRCH" -w "^Ready;"
 herccontrol "/GCCGEN" -w "^Ready;"
 
-herccontrol "/ipl cms" -w "^CMS"
+herccontrol "/ipl cms" -w "^VM Community Edition"
 # Don't run the SYSPROFB EXEC because the existing version of BREXX and
 # the new version of GCCLIB might be incompatible.
 # herccontrol "/" -w "^Ready;"
