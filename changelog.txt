@@ -1,8 +1,15 @@
 GCCLIB Change LOG
 =================
+1.0.1 - 5 Jul 2022 (on VM/CE 1.1.2) 27 Oct 2024 (on GitHub)
       - Update build tools for GitHub changes
-
-1.0.1 -  5 Jul 2022
+      - Updated build process for VM/370 Community Edition 1.1.2
+      - Continued (finished?) support for segment-resident dynamically-linked GCCLIB.
+      - Add "lrecl=nnn" and "recfm=F|V" parameters to fopen() and freopen().
+      - Support CMS EPLISTs of up to 32 arguments.
+      - Add __CMSCMD() interface function for passing both plists and calltype.
+      - Added helpfiles for GCC* EXEC tools.
+      - Breaking changes:
+        - Removed unnecessary second parameter from CMSmemoryFree().
 
 1.0.0 - 15 Apr 2021
 F0054 - Updated Build process for CE

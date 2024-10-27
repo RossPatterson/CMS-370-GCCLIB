@@ -588,7 +588,7 @@ Notes:
        Note that if such a program abnormally terminates, CMS does not release this memory.
 /*************************************************************************************************
 int __dmsfrt(void * memory, int doublewords);
-#define CMSmemoryFree(s1, s2) (__dmsfrt((s1),(s2))
+#define CMSmemoryFree(s1, s2) (__dmsfrt((s1))
 
 /*************************************************************************************************
 int CMSprintLine(char * line)
