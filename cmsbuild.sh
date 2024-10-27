@@ -4,6 +4,9 @@
 # Exit if there is an error
 set -e
 
+# Show the commands
+set -x
+
 # IPL
 herccontrol "ipl 6a1" -w "USER DSC LOGOFF AS AUTOLOG1"
 herccontrol "/cp start c" -w "RDR"
