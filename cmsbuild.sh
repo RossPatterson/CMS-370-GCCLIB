@@ -102,7 +102,6 @@ herccontrol "/GCCGEN" -w "^Ready;"
 herccontrol "/ipl cms" -w "^VM Community Edition"
 # Don't run the SYSPROFB EXEC because the existing version of BREXX and
 # the new version of GCCLIB might be incompatible.
-# herccontrol "/" -w "^Ready;"
 herccontrol "/access (noprof" -w "^Ready;"
 
 # Make binary tape and vmarc
@@ -118,11 +117,8 @@ herccontrol "/begin"
 herccontrol "/access 194 e" -w "^Ready;"
 herccontrol "/copyfile gcclib * a = = e" -w "^Ready;"
 herccontrol "/copyfile gccres * a = = e" -w "^Ready;"
-#herccontrol "/tape dump gcclib * a (noprint" -w "^Ready;"
-#herccontrol "/tape dump gccres * a (noprint" -w "^Ready;"
 herccontrol "/tape dump * * e (noprint" -w "^Ready;"
 herccontrol "/detach 181" -w "^Ready;"
-#herccontrol "/vmarc pack gcc* * a (pun notrace" -w "^Ready;"
 herccontrol "/vmarc pack * * e (pun notrace" -w "^Ready;"
 
 # Close and remove extra record from VMARC file
