@@ -25,7 +25,9 @@ jobs:
       working-directory: /opt/hercules/vm370
       run: |
         chmod -R ugo+rw *
-        hercules -f hercules.conf -d >/dev/null 2>/dev/null &
+        . /opt/hercules/vm370/setup.sh
+        # hercules -f hercules.conf -d >/dev/null 2>/dev/null &
+        hercules -f hercules.conf -d &
         cd io
         chmod +x cmsbuild.sh
         echo "Running CMSBUILD"

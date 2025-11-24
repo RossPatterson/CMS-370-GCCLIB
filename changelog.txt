@@ -1,5 +1,6 @@
 GCCLIB Change LOG
 =================
+      - Run tests during build.
       - Add ftell() test for newly-opened existing RECFM=F file.
       - Upgrade starting GCCBRX DASD to VM/CE 1.2 (instead of bREXX 1.0.0).
 

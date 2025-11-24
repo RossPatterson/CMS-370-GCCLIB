@@ -61,18 +61,24 @@ int recurse3(unsigned int x) {
 
 int main(int argc, char *argv[]) {
     int r;
+    int failed_tests = 0;
     printf("GCCLIB Stack Test\n");
-    recurse1(0);
+    r = recurse1(0);
+    if (r != 0) failed_tests++;
     printf("GCCLIB Stack Test - Done\n");
 
     printf("GCCLIB Stack Test (with longjmp)\n");
     if (!(r = setjmp(buf))) recurse2(0);
-    if (r != 5) printf("ERROR: set/longjmp did not return expected rc!!\n");
+    if (r != 5) {
+        printf("ERROR: set/longjmp did not return expected rc!!\n");
+        failed_tests++;
+    }
     printf("GCCLIB Stack Test (with longjmp) - Done\n");
 
     printf("GCCLIB Stack Test (with exit)\n");
-    recurse3(0);
+    r = recurse3(0);
+    if (r != 0) failed_tests++;
     printf("ERROR - GCCLIB Stack Test (with exit) - should not get here\n");
 
-    return 0;
+    return failed_tests;
 }

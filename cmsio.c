@@ -41,7 +41,29 @@ static CMSDRIVERS __iodrivers[] =
         };
 
 /* FILE checker */
+#if 0
 #define badfile(f) ( (f)==NULL || (f)->device==NULL || (f)->validator1!='F' || (f)->validator2!='@' )
+#else
+static int badfile(FILE *f) {
+    if (f == NULL) {
+        printf("CMSIO: File pointer is NULL\n");
+        return 0;
+    }
+    if (f->device == NULL) {
+        printf("CMSIO: File pointer is %p, device pointer is NULL\n", f);
+        return 0;
+    }
+    if (f->validator1 != 'F') {
+        printf("CMSIO: File pointer is %p, validator1 is '%c', expected 'F'\n", f, f->validator1);
+        return 0;
+    }
+    if (f->validator2 != '@') {
+        printf("CMSIO: File pointer is %p, validator2 is '%c', expected '@'\n", f, f->validator2);
+        return 0;
+    }
+    return 1;
+}
+#endif
 
 /* Add file to file list */
 static void add_file(FILE *file) {

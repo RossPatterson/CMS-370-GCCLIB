@@ -7,6 +7,14 @@ set -e
 # Show the commands
 set -x
 
+### TEMP
+# Install HercControl
+wget -nv https://raw.githubusercontent.com/RossPatterson/PyHercControl/refs/tags/v1.1.2/PyHercControl/src/herccontrol
+chmod +x herccontrol
+mv herccontrol /usr/local/bin
+### TEMP
+
+
 # IPL
 herccontrol "ipl 6a1" -w "USER DSC LOGOFF AS AUTOLOG1"
 herccontrol "/cp start c" -w "RDR"
@@ -100,9 +108,9 @@ herccontrol "/GCCSRCH" -w "^Ready;"
 herccontrol "/GCCGEN" -w "^Ready;"
 
 herccontrol "/ipl cms" -w "^VM Community Edition"
-# Don't run the SYSPROFB EXEC because the existing version of BREXX and
-# the new version of GCCLIB might be incompatible.
-herccontrol "/access (noprof" -w "^Ready;"
+herccontrol "/" -w "^Ready;"
+# Drop bREXX in case it is incompatible with the new GCCLIB.
+herccontrol "/RESLIB DEL DMSREX" -w "^Ready;"
 
 # Make binary tape and vmarc
 herccontrol "/cp disc" -w "^VM/370 Online"
@@ -125,7 +133,76 @@ herccontrol "/vmarc pack * * e (pun notrace" -w "^Ready;"
 herccontrol "devinit 00d dummy" -w "^HHCPN098I"
 truncate -s-80 gcclibbin.vmarc
 
-# LOGOFF
+# TEMPORARY!  Build GCCCSECT MODULE, until a new VM/CE release ships our version.
+herccontrol "/GCCSRCH" -w "^Ready;"
+herccontrol "/MKGCCCS" -w "^Ready;"
+
+# Deploy the new GCCLIB
+herccontrol "/cp disc" -w "^VM/370 Online"
+herccontrol "/logon operator operator" -w "RECONNECTED AT"
+herccontrol "/purge maint rdr" -w "FILES PURGED"
+herccontrol "/cp disc" -w "^VM/370 Online"
+herccontrol "/logon maintc maintc" -w "RECONNECTED AT"
+herccontrol "/begin"
+herccontrol "/cp spool punch to maint cont" -w "^Ready;"
+herccontrol "/disk dump gcclib txtlib e" -w "^Ready;"
+herccontrol "/disk dump gcclib text e" -w "^Ready;"
+herccontrol "/disk dump gccres txtlib e" -w "^Ready;"
+herccontrol "/cp spool punch close" -w "^Ready;"
+herccontrol "/disc" -w "^VM/370 Online"
+herccontrol "/logon maint cpcms" -w "^VM Community Edition"
+herccontrol "/" -w "^Ready"
+herccontrol "/disk load" -w "^Ready"
+herccontrol "/access 19e y" -w "^Ready"
+herccontrol "/copyfile gcclib txtlib a = = y2 (olddate replace" -w "^Ready;"
+herccontrol "/copyfile gcclib text a = = y2 (olddate replace" -w "^Ready;"
+herccontrol "/copyfile gccres txtlib a = = y2 (olddate replace" -w "^Ready;"
+herccontrol "/access 19e y/s" -w "^Ready"
+herccontrol "/define storage 16m"  -w "CP ENTERED"
+herccontrol "/ipl 190 clear" -w "^VM Community Edition"
+herccontrol "/savesys cms" -w "^VM Community Edition"
+herccontrol "/access (noprof" -w "^Ready;"
+herccontrol "/disc" -w "^VM/370 Online"
+
+# Build the tests
+herccontrol "/logon maintc maintc" -w "RECONNECTED AT"
+herccontrol "/begin"
+herccontrol "/profile" -w "^Ready;"
+herccontrol "/GCCSRCH" -w "^Ready;"
+herccontrol "/MKTEST" -w "^Ready;" -t 240 --debug
+herccontrol "/logoff" -w "^VM/370 Online"
+
+# Run tests with GCCLIB inside the VM
+herccontrol "/logon maintc maintc noipl"  -w "LOGON AT"
+herccontrol "/define storage 16m"  -w "CP ENTERED"
+herccontrol "/ipl cms" -w "^Ready;"
+herccontrol "/access (noprof" -w "^Ready;"
+herccontrol "/SET LDRTBLS 64" -w "^Ready;"
+herccontrol "/NUCXTEXT GCCLIB ( SYSTEM PERM" -w "^Ready;"
+herccontrol "/profile" -w "^Ready;"
+herccontrol "/purge rdr" -w "^Ready;"
+# Note: This next one accepts RC > 0.  We'll remove that when the tests are cleaned up.
+herccontrol "/RUNTEST" -w "^Ready"
+herccontrol "/logoff" -w "^VM/370 Online"
+
+# Deploy the new GCCLIB DCSS
+herccontrol "/logon maint cpcms" -w "RECONNECTED AT"
+herccontrol "/define storage 16m"  -w "CP ENTERED"
+herccontrol "/ipl cms" -w "^Ready;"
+herccontrol "/access (noprof" -w "^Ready;"
+herccontrol "/gccseg f20000" -w "^Ready;"
+herccontrol "/logoff" -w "^VM/370 Online"
+
+# Run tests with GCCLIB in the DCSS
+herccontrol "/logon maintc maintc"  -w "^VM Community Edition"
+herccontrol "/access (noprof" -w "^Ready;"
+herccontrol "/SET LDRTBLS 64" -w "^Ready;"
+herccontrol "/SEGMENT LOAD GCCLIB ( SYSTEM SHARE" -w "^Ready;"
+herccontrol "/profile" -w "^Ready;"
+herccontrol "/GCCSRCH" -w "^Ready;"
+herccontrol "/purge rdr" -w "^Ready;"
+# Note: This next one accepts RC > 0.  We'll remove that when the tests are cleaned up.
+herccontrol "/RUNTEST" -w "^Ready"
 herccontrol "/logoff" -w "^VM/370 Online"
 
 # SHUTDOWN

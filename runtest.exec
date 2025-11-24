@@ -1,0 +1,20 @@
+&FAILED = 0
+&ERROR &FAILED = &FAILED + &RETCODE
+
+* test.c linked statically
+TESTS
+
+* test.c linked to the GCCSEG DCSS
+TESTR
+
+* teststak.c linked statically
+TESTSTKS
+
+* teststak.c linked to the GCCSEG DCSS
+TESTSTKR
+
+EXEC TSTARG
+
+TSTS
+
+&EXIT &FAILED
