@@ -5,29 +5,40 @@
 
 int main(int argc, char *argv[]) {
     int rc;
+    int failed_tests = 0;
     char *ret;
     char *binary = "BINARY\x00ZZZ";
     printf("Call/Arg Test\n");
 
     rc = CMScommand("tstarg2 Argument1 Argument2 Argument3", 0);
     if (rc == 1) printf(" - Call type 0 OK\n");
-    else printf(" - Call type 0 Error (rc=%d)\n", rc);
+    else {
+        failed_tests++;
+        printf(" - Call type 0 Error (rc=%d)\n", rc);
+    }
 
 
     rc = CMScommand("tstarg2 Argument1 Argument2 Argument3", 1);
     if (rc == 1) printf(" - Call type 1 OK\n");
-    else printf(" - Call type 1 Error (rc=%d)\n", rc);
+    else {
+        failed_tests++;
+        printf(" - Call type 1 Error (rc=%d)\n", rc);
+    }
 
 
     rc = CMScommand("tstarg2 Argument1 Argument2 Argument3", 11);
     if (rc == 1) printf(" - Call type 11 OK\n");
-    else printf(" - Call type 11 Error (rc=%d)\n", rc);
+    else {
+        failed_tests++;
+        printf(" - Call type 11 Error (rc=%d)\n", rc);
+    }
 
 
     rc = CMSfunction("TSTARG2", "TSTARG2 tstarg2", 0, &ret, 3, "Argument 1",
                      "Argument 2", "Argument 3");
     if (rc > 0 && ret && strcmp(ret, "1") == 0) printf(" - Call type 5 OK\n");
     else {
+        failed_tests++;
         printf(" - Call type 5 Error (rc=%d)\n", rc);
         if (ret) printf(" - Call return: %s\n", ret);
         else printf(" - No Return String\n");
@@ -40,6 +51,7 @@ int main(int argc, char *argv[]) {
     if (rc > 0 && ret && strcmp(ret, "1") == 0)
         printf(" - Call type 5 CMSsimplefunction() OK\n");
     else {
+        failed_tests++;
         printf(" - Call type 5 Error CMSsimplefunction() (rc=%d)\n", rc);
         if (ret) printf(" - Call return: %s\n", ret);
         else printf(" - No Return String\n");
@@ -50,8 +62,10 @@ int main(int argc, char *argv[]) {
     rc = CMSsimpleprocedure("tstarg2", 3, "Argument 1", "Argument 2",
                             "Argument 3");
     if (rc == 0) printf(" - Call type 5 CMSsimpleprocedure() OK\n");
-    else printf(" - Call type 5 Error CMSsimpleprocedure() (rc=%d)\n", rc);
-
+    else {
+        failed_tests++;
+        printf(" - Call type 5 Error CMSsimpleprocedure() (rc=%d)\n", rc);
+    }
 
     rc = CMSfunction("TSTARG2", "TSTARG2 stringreturn", 0, &ret, 3,
                      "Argument 1", "Argument 2", "Argument 3");
@@ -59,6 +73,7 @@ int main(int argc, char *argv[]) {
         strcmp(ret, "text return value") == 0)
         printf(" - Call type 5 (text return) OK\n");
     else {
+        failed_tests++;
         printf(" - Call type 5 (text return) Error (rc=%d)\n", rc);
         if (ret) printf(" - Call return: %s\n", ret);
         else printf(" - No Return String\n");
@@ -71,6 +86,7 @@ int main(int argc, char *argv[]) {
     if (rc == 10 && ret && memcmp(ret, binary, 10) == 0)
         printf(" - Call type 5 (binary return) OK\n");
     else {
+        failed_tests++;
         printf(" - Call type 5 (binary return) Error (rc=%d)\n", rc);
         if (ret) printf(" - Call return: %s\n", ret);
         else printf(" - No Return String\n");
@@ -83,6 +99,7 @@ int main(int argc, char *argv[]) {
     if (rc > 0 && ret && strcmp(ret, "1") == 0)
         printf(" - Call type 5 (proc) OK\n");
     else {
+        failed_tests++;
         printf(" - Call type 5 Error (proc) (rc=%d)\n", rc);
         if (ret) printf(" - Call return: %s\n", ret);
         else printf(" - No Return String\n");
@@ -95,6 +112,7 @@ int main(int argc, char *argv[]) {
     if (rc > 0 && ret && strcmp(ret, "1") == 0)
         printf(" - Call type 5 (func) OK\n");
     else {
+        failed_tests++;
         printf(" - Call type 5 Error (func) (rc=%d)\n", rc);
         if (ret) printf(" - Call return: %s\n", ret);
         else printf(" - No Return String\n");
@@ -109,11 +127,12 @@ int main(int argc, char *argv[]) {
     if (rc == 10 && ret && memcmp(ret, binary, rc) == 0)
         printf(" - Call type 5 (binary args) OK\n");
     else {
+        failed_tests++;
         printf(" - Call type 5 (binary args) Error (rc=%d)\n", rc);
         if (ret) printf(" - Call return: %s\n", ret);
         else printf(" - No Return String\n");
     }
     if (ret) free(ret);
 
-    return 0;
+    return failed_tests;
 }

@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     IO_FFL_T();
     IO_COM_T();
     REPORT();
-    return 0;
+    return ERRORS;
 }
 
 /* Test Infrastructure */

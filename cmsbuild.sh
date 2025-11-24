@@ -100,9 +100,9 @@ herccontrol "/GCCSRCH" -w "^Ready;"
 herccontrol "/GCCGEN" -w "^Ready;"
 
 herccontrol "/ipl cms" -w "^VM Community Edition"
-# Don't run the SYSPROFB EXEC because the existing version of BREXX and
-# the new version of GCCLIB might be incompatible.
-herccontrol "/access (noprof" -w "^Ready;"
+herccontrol "/" -w "^Ready;"
+# Drop bREXX in case it is incompatible with the new GCCLIB.
+herccontrol "/RESLIB DEL DMSREX" -w "^Ready;"
 
 # Make binary tape and vmarc
 herccontrol "/cp disc" -w "^VM/370 Online"
@@ -124,6 +124,12 @@ herccontrol "/vmarc pack * * e (pun notrace" -w "^Ready;"
 # Close and remove extra record from VMARC file
 herccontrol "devinit 00d dummy" -w "^HHCPN098I"
 truncate -s-80 gcclibbin.vmarc
+
+# Run tests
+herccontrol "/GCCSRCH" -w "^Ready;"
+herccontrol "/MKTEST" -w "^Ready;"
+# Note: This next one accepts RC > 0.  We'll remove that when the tests are cleaned up.
+herccontrol "/RUNTEST" -w "^Ready"
 
 # LOGOFF
 herccontrol "/logoff" -w "^VM/370 Online"
