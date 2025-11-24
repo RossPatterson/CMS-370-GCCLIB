@@ -575,6 +575,10 @@ static void ftell_t() {
     ASSERTNOTEOFP("fputs()", , fputs("PREFIX", test),);
     ASSERTNOTZERO("ftell()", , ftell(test) == 6,);
     ASSERTZEROP("fclose()", , fclose(test),);
+    ASSERTNOTNULLP("fopen(TEMP FILE A F 80,rb)",
+                   test = fopen("TEMP FILE A F 80", "rb"), test,);
+    ASSERTNOTZERO("ftell()", , ftell(test) == 0,);
+    ASSERTZEROP("fclose()", , fclose(test),);
 }
 
 /**************************************************************************************************/
