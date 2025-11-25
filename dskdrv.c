@@ -379,11 +379,12 @@ static int getpos(FILE *file) {
         return -1;
     }
 
+    pos = (file->recnum == 0) ? 0 : file->recnum - 1;
     if (file->access & ACCESS_TEXT) {
         /* We count the virtual \n character for each record */
-        pos = (file->recnum - 1) * (file->filemaxreclen + 1);
+        pos = pos * (file->filemaxreclen + 1);
     } else {
-        pos = (file->recnum - 1) * file->filemaxreclen;
+        pos = pos * file->filemaxreclen;
     }
     pos += file->recpos;
 
