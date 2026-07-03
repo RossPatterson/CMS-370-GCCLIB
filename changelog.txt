@@ -1,5 +1,6 @@
 GCCLIB Change LOG
 =================
+I0059 - Error: stdio.h:573:1: warning: "/*" within comment.
       - Upgrade starting GCCBRX DASD to VM/CE 1.2 (instead of bREXX 1.0.0).
 
 1.0.1 - 5 Jul 2022 (on VM/CE 1.1.2) 27 Oct 2024 (on GitHub)

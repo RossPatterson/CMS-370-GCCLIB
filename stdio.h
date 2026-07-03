@@ -569,7 +569,7 @@ tmpnam(char *name);
 /* Returns a string containing a file name different from the name of any existing file, and thus */
 /* suitable to safely create a temporary file without risking to overwrite an existing file.      */
 /*                                                                                                */
-/* If str is a null pointer, the resulting string is stored in an internal static array that can  8/
+/* If str is a null pointer, the resulting string is stored in an internal static array that can  */
 /* be accessed by the return value. The content of this string is preserved at least until a      */
 /* subsequent call to this same function, which may overwrite it.                                 */
 /*                                                                                                */
